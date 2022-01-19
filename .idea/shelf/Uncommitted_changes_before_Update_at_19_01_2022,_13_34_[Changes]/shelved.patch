@@ -1,0 +1,18 @@
+Index: main.go
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package main\n\nimport \"github.com/gocolly/colly\"\n\nfunc main() {\n\tcolly.NewCollector()
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/main.go b/main.go
+--- a/main.go	(revision 38fcbcfa52d2afee4734e9d7e03874c1c46ea70a)
++++ b/main.go	(date 1642592052254)
+@@ -3,4 +3,4 @@
+ import "github.com/gocolly/colly"
+ 
+ func main() {
+-	colly.NewCollector()
+\ No newline at end of file
++	//colly.NewCollector()
+\ No newline at end of file
