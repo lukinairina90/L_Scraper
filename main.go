@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/gocolly/colly"
-	"strconv"
 )
+
+const page = "https://lun.ua/ru/%D0%B2%D1%81%D0%B5-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B8-%D0%BA%D0%B8%D0%B5%D0%B2%D0%B0?page="
 
 func main() {
 	// Instantiate default collector
@@ -76,20 +77,14 @@ func main() {
 	//})
 
 	//pagination
-	c.OnHTML(`.UIPagination`, func(e *colly.HTMLElement) {
-		linkPage := "https://lun.ua/ru/%D0%B2%D1%81%D0%B5-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B8-%D0%BA%D0%B8%D0%B5%D0%B2%D0%B0?page="
-		//todo eternal iterator, need to know how to stop[ on the needed point
-		for i := 1; true; i++ {
-			incrStr := strconv.Itoa(i)
-			err := e.Request.Visit(linkPage + incrStr)
+	c.OnHTML(`.UIPagination .UIChip:last-child`, func(e *colly.HTMLElement) {
+		nextPage := e.Attr("data-page")
+		if nextPage != "" {
+			err := c.Visit(page + nextPage)
 			if err != nil {
-				println(err)
+				fmt.Printf("error on changing page: %v", err)
 			}
-			println("Next page link found:", linkPage+incrStr)
 		}
-		//class := e.DOM.Find(".-regular")
-		//println(class.Text())
-
 	})
 
 	// Before making a request print "Visiting ..."
@@ -98,8 +93,11 @@ func main() {
 	})
 
 	// Start scraping on https://lun.ua/ru/
-	err := c.Visit("https://lun.ua/ru/%D0%B2%D1%81%D0%B5-%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D1%80%D0%BE%D0%B9%D0%BA%D0%B8-%D0%BA%D0%B8%D0%B5%D0%B2%D0%B0")
+	err := c.Visit(page + "1")
 	if err != nil {
+		fmt.Printf("error on starting scraper: %v", err)
 		return
 	}
+
+	println("success")
 }
