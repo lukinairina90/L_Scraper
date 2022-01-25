@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/gocolly/colly v1.2.0
+	gorm.io/driver/mysql v1.2.3
 	gorm.io/gorm v1.22.5
 )
 
@@ -30,5 +31,4 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v2 v2.2.5 // indirect
-	gorm.io/driver/mysql v1.2.3 // indirect
 )

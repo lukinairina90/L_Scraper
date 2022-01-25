@@ -65,17 +65,23 @@ func (s *scraper) collectData() error {
 		//
 		////Iterate over rows of the table which contains different information
 		////about the website
+		property := models.Property{
+			Name: name,
+		}
+
+		s.db.Create(&property)
 		e.ForEach(".BuildingAttributes-item", func(_ int, el *colly.HTMLElement) {
 			charName := el.DOM.Find(".BuildingAttributes-name").Text()
 			charValue := el.DOM.Find(".BuildingAttributes-value").Text()
 
 			fmt.Printf("Characteristic: %s, value:%s\n", charName, charValue)
 
-			s.db.Create(&models.Property{
-				Name:           name,
+			s.db.Create(&models.PropertyCharacteristic{
+				PropertyId:     property.ID,
 				Characteristic: charName,
 				Value:          charValue,
 			})
+
 		})
 	})
 

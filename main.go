@@ -25,7 +25,7 @@ func main() {
 	}
 
 	// Миграция схем
-	if err = db.AutoMigrate(&models.Property{}); err != nil {
+	if err = db.AutoMigrate(&models.Property{}, &models.PropertyCharacteristic{}); err != nil {
 		return
 	}
 
