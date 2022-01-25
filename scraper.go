@@ -1,10 +1,16 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly"
 	"github.com/lukinairina90/L_Scraper/models"
 	"gorm.io/gorm"
+	"io"
+	"log"
+	"net/http"
+	"os"
 	"strings"
 )
 
@@ -39,32 +45,35 @@ func (s *scraper) collectData() error {
 		name := strings.TrimSpace(nameEl.Text())
 		fmt.Printf("Name %s\n", name)
 
-		////check pictures folder exist, if not created, create
-		//path := s.cfg.PictureFolder + "/" + code
-		//err := os.Mkdir(path, 0700)
-		//if err != nil {
-		//	log.Println(err)
-		//}
-		//
-		//e.DOM.Closest("body").Find(".thumbnail__picture[src*='images']").Each(func(i int, s *goquery.Selection) {
-		//	thumbSrc, _ := s.Attr("src")
-		//	thumbSplit := strings.Split(thumbSrc, "/")
-		//	thumbPic := thumbSplit[len(thumbSplit)-1]
-		//	thumbPic = thumbPic[:len(thumbPic)-4]
-		//
-		//	err := downloadFile(thumbSrc, path, thumbPic)
-		//	if err != nil {
-		//		log.Fatal(err)
-		//	}
-		//})
-		//
-		//e.ForEach("body.thumbnail__picture", func(_ int, e *colly.HTMLElement) {
-		//	elName := e.DOM.Find(".a > img").Text()
-		//	println(elName)
-		//})
-		//
-		////Iterate over rows of the table which contains different information
-		////about the website
+		//check pictures folder exist, if not created, create
+
+		path := s.cfg.PictureFolder + "/" + "ujhbhb"
+		err := os.Mkdir(path, 0700)
+		if err != nil {
+			log.Println(err)
+		}
+
+		e.DOM.Closest("body").Find(".BuildingGallery-slider img").Each(func(i int, s *goquery.Selection) {
+			thumbSrc, _ := s.Attr("src")
+			fmt.Println("thumbSrc:        ", thumbSrc)
+
+			//thumbSplit := strings.Split(thumbSrc, "/")
+			//thumbPic := thumbSplit[len(thumbSplit)-1]
+			//thumbPic = thumbPic[:len(thumbPic)-4]
+
+			err := downloadFile(thumbSrc, path)
+			if err != nil {
+				log.Fatal(err)
+			}
+		})
+
+		e.ForEach(".pswp__img", func(_ int, e *colly.HTMLElement) {
+			elName := e.DOM.Find("div > img").Text()
+			println("ELNAME", elName)
+		})
+
+		//Iterate over rows of the table which contains different information
+		//about the website
 		property := models.Property{
 			Name: name,
 		}
@@ -109,4 +118,35 @@ func (s *scraper) collectData() error {
 	}
 
 	return err
+}
+
+func downloadFile(url, path string) error {
+	//Get the response bytes from the url
+	//todo get full size pictures
+	//https://content.rozetka.com.ua/goods/images/big/237518862.jpg
+	//https://content.rozetka.com.ua/goods/images/preview/240240612.jpg
+	//url = strings.Replace(url, "preview/", "big/", 1)
+	response, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		return errors.New("received non 200 response code")
+	}
+	//Create an empty file
+	file, err := os.Create(path + "/")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	//Write the bytes to the fiel
+	_, err = io.Copy(file, response.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
