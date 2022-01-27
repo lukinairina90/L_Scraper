@@ -22,6 +22,15 @@ type scraper struct {
 }
 
 func (s *scraper) collectData() error {
+	//check folder exists pictures
+	if _, err := os.Stat(s.cfg.PictureFolder); err != nil {
+		if os.IsNotExist(err) {
+			err := os.Mkdir(s.cfg.PictureFolder, 0700)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
 	// Instantiate default collector
 	c := colly.NewCollector(
 		// Visit only domains: lun.ua
@@ -45,31 +54,28 @@ func (s *scraper) collectData() error {
 		name := strings.TrimSpace(nameEl.Text())
 		fmt.Printf("Name %s\n", name)
 
-		//check pictures folder exist, if not created, create
+		var oldProp models.Property
+		if err := s.db.Where("name = ?", name).First(&oldProp).Error; err == nil {
+			return
+		}
 
-		path := s.cfg.PictureFolder + "/" + "ujhbhb"
+		//check pictures folder exist, if not created, create
+		path := s.cfg.PictureFolder + "/" + name
 		err := os.Mkdir(path, 0700)
 		if err != nil {
 			log.Println(err)
 		}
 
-		e.DOM.Closest("body").Find(".BuildingGallery-slider img").Each(func(i int, s *goquery.Selection) {
+		e.DOM.Closest("body").Find("#gallery img").Each(func(i int, s *goquery.Selection) {
 			thumbSrc, _ := s.Attr("src")
-			fmt.Println("thumbSrc:        ", thumbSrc)
+			thumbSplit := strings.Split(thumbSrc, "/")
+			thumbPic := thumbSplit[len(thumbSplit)-1]
+			thumbPic = thumbPic[:len(thumbPic)-4]
 
-			//thumbSplit := strings.Split(thumbSrc, "/")
-			//thumbPic := thumbSplit[len(thumbSplit)-1]
-			//thumbPic = thumbPic[:len(thumbPic)-4]
-
-			err := downloadFile(thumbSrc, path)
+			err := downloadFile(thumbSrc, path, thumbPic)
 			if err != nil {
 				log.Fatal(err)
 			}
-		})
-
-		e.ForEach(".pswp__img", func(_ int, e *colly.HTMLElement) {
-			elName := e.DOM.Find("div > img").Text()
-			println("ELNAME", elName)
 		})
 
 		//Iterate over rows of the table which contains different information
@@ -94,22 +100,6 @@ func (s *scraper) collectData() error {
 		})
 	})
 
-	//pagination
-	//c.OnHTML(`.UIPagination .UIChip:last-child`, func(e *colly.HTMLElement) {
-	//	nextPage := e.Attr("data-page")
-	//	if nextPage != "" {
-	//		err := c.Visit(page + nextPage)
-	//		if err != nil {
-	//			fmt.Printf("error on changing page: %v", err)
-	//		}
-	//	}
-	//})
-
-	// Before making a request print "Visiting ..."
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Pagination", r.URL)
-	})
-
 	// Start scraping on https://lun.ua/ru/
 	err := c.Visit(page + "1")
 	if err != nil {
@@ -120,12 +110,8 @@ func (s *scraper) collectData() error {
 	return err
 }
 
-func downloadFile(url, path string) error {
+func downloadFile(url, path, picID string) error {
 	//Get the response bytes from the url
-	//todo get full size pictures
-	//https://content.rozetka.com.ua/goods/images/big/237518862.jpg
-	//https://content.rozetka.com.ua/goods/images/preview/240240612.jpg
-	//url = strings.Replace(url, "preview/", "big/", 1)
 	response, err := http.Get(url)
 	if err != nil {
 		return err
@@ -136,13 +122,13 @@ func downloadFile(url, path string) error {
 		return errors.New("received non 200 response code")
 	}
 	//Create an empty file
-	file, err := os.Create(path + "/")
+	file, err := os.Create(path + "/" + picID + ".jpg")
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	//Write the bytes to the fiel
+	//Write the bytes to the file
 	_, err = io.Copy(file, response.Body)
 	if err != nil {
 		return err

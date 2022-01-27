@@ -15,8 +15,6 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("CONFIGGGG  %+v\n", cfg)
-
 	// смотрите https://github.com/go-sql-driver/mysql#dsn-data-source-name для подробностей
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", cfg.Login, cfg.Password, cfg.Host, cfg.Port, cfg.DB)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
