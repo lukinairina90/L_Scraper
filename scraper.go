@@ -100,6 +100,17 @@ func (s *scraper) collectData() error {
 		})
 	})
 
+	//pagination
+	c.OnHTML(`.UIPagination .UIChip:last-child`, func(e *colly.HTMLElement) {
+		nextPage := e.Attr("data-page")
+		if nextPage != "" {
+			err := c.Visit(page + nextPage)
+			if err != nil {
+				fmt.Printf("error on changing page: %v", err)
+			}
+		}
+	})
+
 	// Start scraping on https://lun.ua/ru/
 	err := c.Visit(page + "1")
 	if err != nil {
